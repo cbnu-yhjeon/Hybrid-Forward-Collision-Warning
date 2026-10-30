@@ -1,8 +1,6 @@
 """결과 시각화: 위험 등급 색 박스 + 거리/TTC 라벨 + 차선 + (선택) GT 박스."""
 from __future__ import annotations
 
-from typing import List, Optional
-
 import cv2
 import numpy as np
 
@@ -14,8 +12,8 @@ from hfcw.types import CAUTION, DANGER, LEVEL_NAMES, SAFE, ObjectEstimate
 LEVEL_COLOR = {SAFE: (0, 200, 0), CAUTION: (0, 200, 255), DANGER: (0, 0, 255)}
 
 
-def draw(img: np.ndarray, objects: List[ObjectEstimate], lanes=None,
-         gt: Optional[List[Object3D]] = None, use_geo: bool = False,
+def draw(img: np.ndarray, objects: list[ObjectEstimate], lanes=None,
+         gt: list[Object3D] | None = None, use_geo: bool = False,
          title: str = "") -> np.ndarray:
     canvas = img.copy()
     if lanes is not None and lanes[2] is not None and lanes[2].any():

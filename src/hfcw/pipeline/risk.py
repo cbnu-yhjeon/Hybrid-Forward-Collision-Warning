@@ -7,8 +7,6 @@
 """
 from __future__ import annotations
 
-from typing import Optional, Tuple
-
 import numpy as np
 
 from hfcw.types import CAUTION, DANGER, SAFE, Detection
@@ -18,7 +16,7 @@ DANGER_Z, DANGER_X = 10.0, 1.8
 CAUTION_Z, CAUTION_X = 25.0, 3.5
 
 
-def level_from_geometry(z: Optional[float], x: Optional[float]) -> int:
+def level_from_geometry(z: float | None, x: float | None) -> int:
     if z is None or x is None or z <= 0:
         return SAFE
     if z < DANGER_Z and abs(x) < DANGER_X:
@@ -38,7 +36,7 @@ def _center_score(det: Detection, img_w: int, img_h: int) -> float:
     return 1.0 - float(np.clip(np.sqrt(dx ** 2 + dy ** 2) / np.sqrt(2), 0.0, 1.0))
 
 
-def risk_v1(det: Detection, img_w: int, img_h: int, visibility: float) -> Tuple[int, float]:
+def risk_v1(det: Detection, img_w: int, img_h: int, visibility: float) -> tuple[int, float]:
     size_score = min(det.area / (img_w * img_h * 0.08), 1.0)
     vis_weight = 1.0 + 0.3 * (1.0 - visibility)
     score = float(np.clip((0.5 * size_score + 0.5 * _center_score(det, img_w, img_h))
@@ -48,8 +46,8 @@ def risk_v1(det: Detection, img_w: int, img_h: int, visibility: float) -> Tuple[
 
 def risk_v2(det: Detection, img_w: int, img_h: int, visibility: float,
             harris: int = 0, sift: int = 0, hog: float = 0.0, in_lane: bool = True,
-            ttc_s: Optional[float] = None,
-            distance_m: Optional[float] = None) -> Tuple[int, float]:
+            ttc_s: float | None = None,
+            distance_m: float | None = None) -> tuple[int, float]:
     """v2 risk.assess_risk와 같은 식. TTC 가중치는 v2 화면 표기 의도대로 초 단위로 해석합니다."""
     if distance_m is not None:
         size_score = float(np.clip(1.0 - (distance_m - 5.0) / 45.0, 0.0, 1.0))

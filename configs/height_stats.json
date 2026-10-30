@@ -37,6 +37,12 @@
       "Cyclist": 1.7657,
       "Pedestrian": 1.706,
       "Truck": 3.1073
+    },
+    "yolo11m_kitti": {
+      "Car": 1.7023,
+      "Cyclist": 1.8353,
+      "Pedestrian": 1.8073,
+      "Truck": 3.2275
     }
   },
   "detector_effective_n": {
@@ -45,6 +51,12 @@
       "Cyclist": 331,
       "Pedestrian": 1178,
       "Truck": 153
+    },
+    "yolo11m_kitti": {
+      "Car": 5907,
+      "Cyclist": 474,
+      "Pedestrian": 1168,
+      "Truck": 241
     }
   }
 }

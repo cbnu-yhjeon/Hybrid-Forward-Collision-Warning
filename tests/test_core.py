@@ -4,7 +4,7 @@ import pytest
 from hfcw.data.kitti import Calib, Frame, Object3D, _parse_object, parse_calib_file
 from hfcw.detectors.yolo import merge_cyclists
 from hfcw.distance.mono_depth import fit_inverse_depth
-from hfcw.distance.pinhole import PinholeEstimator, V2_MEAN_HEIGHTS
+from hfcw.distance.pinhole import V2_MEAN_HEIGHTS, PinholeEstimator
 from hfcw.eval.kitti_eval import _ap_r40, evaluate
 from hfcw.pipeline.risk import level_from_geometry
 from hfcw.pipeline.tracking import Track
@@ -27,7 +27,7 @@ def test_calib_parsing_both_formats(tmp_path):
 
 
 def test_label_parsing_shifts_x_to_cam2():
-    f = "Car 0.00 0 -1.58 587.0 173.3 614.1 200.1 1.65 1.67 3.64 -0.65 1.71 46.70 -1.59".split()
+    f = ["Car", "0.00", "0", "-1.58", "587.0", "173.3", "614.1", "200.1", "1.65", "1.67", "3.64", "-0.65", "1.71", "46.70", "-1.59"]
     o = _parse_object(f, CALIB)
     assert o.cls == CAR
     assert o.z == pytest.approx(46.70)

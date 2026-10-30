@@ -22,9 +22,9 @@ from tqdm import tqdm
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
-from hfcw.data.kitti import KittiObject  # noqa: E402
-from hfcw.detectors import build_detector  # noqa: E402
-from hfcw.types import box_iou  # noqa: E402
+from hfcw.data.kitti import KittiObject
+from hfcw.detectors import build_detector
+from hfcw.types import box_iou
 
 
 def main():

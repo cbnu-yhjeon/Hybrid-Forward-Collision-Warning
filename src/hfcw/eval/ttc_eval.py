@@ -9,7 +9,6 @@ v = −dz/dt를 구하고 TTC_gt = z / v (v > 0일 때만). 자차 운동은 z�
 from __future__ import annotations
 
 from collections import defaultdict
-from typing import Dict, List, Optional
 
 import numpy as np
 
@@ -19,7 +18,7 @@ HALF_WIN = 3
 TTC_MAX = 5.0
 
 
-def gt_ttc_table(frames: List[Frame], fps: float) -> Dict[tuple, float]:
+def gt_ttc_table(frames: list[Frame], fps: float) -> dict[tuple, float]:
     """(frame_index, track_id) → GT TTC (초). 접근 중이 아니면 키 없음."""
     series = defaultdict(dict)
     for i, fr in enumerate(frames):
@@ -38,7 +37,7 @@ def gt_ttc_table(frames: List[Frame], fps: float) -> Dict[tuple, float]:
     return out
 
 
-def summarize(rows: List[dict], methods: List[str]) -> dict:
+def summarize(rows: list[dict], methods: list[str]) -> dict:
     sel = [r for r in rows if 0 < r["ttc_gt"] < TTC_MAX]
     out = {"n_pairs": len(sel)}
     for m in methods:
@@ -55,5 +54,5 @@ def summarize(rows: List[dict], methods: List[str]) -> dict:
     return out
 
 
-def ttc_or_none(v: Optional[float]) -> Optional[float]:
+def ttc_or_none(v: float | None) -> float | None:
     return None if v is None or not np.isfinite(v) else float(v)

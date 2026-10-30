@@ -3,7 +3,6 @@ from __future__ import annotations
 
 import time
 from dataclasses import dataclass, field
-from typing import List, Optional
 
 import numpy as np
 
@@ -20,7 +19,7 @@ from hfcw.types import ObjectEstimate
 
 @dataclass
 class FrameOutput:
-    objects: List[ObjectEstimate]
+    objects: list[ObjectEstimate]
     pre: Preprocessed
     lanes: tuple = (None, None, None)
     timings: dict = field(default_factory=dict)
@@ -45,7 +44,7 @@ class FCWPipeline:
         if self.tracker:
             self.tracker.reset()
 
-    def process(self, img: np.ndarray, calib: Calib, frame: Optional[Frame] = None) -> FrameOutput:
+    def process(self, img: np.ndarray, calib: Calib, frame: Frame | None = None) -> FrameOutput:
         t = {}
         t0 = time.perf_counter()
         pre = preprocess(img, use_clahe=self.use_clahe)

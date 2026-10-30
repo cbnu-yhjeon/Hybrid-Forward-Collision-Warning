@@ -56,23 +56,61 @@
 | E4m | YOLO11m | Depth Anything V2 Metric + 스케일 보정 | 0.903 | 0.99 | 15.4% | **26.4%** | 0.859 | 0.913 |
 | **E4h** | YOLO11m | **잘린 박스만 깊이, 나머지 핀홀** | 0.903 | 0.99 | **11.7%** | 26.5%¹ | 0.860 | 0.957 |
 | E5 | GT 박스 | 핀홀 · 평균 높이 | 1.000 | 0.00 | 17.3% | 45.4% | 0.770 | 0.995 |
+| E2ft | YOLO11m KITTI 미세조정 | 핀홀 · 평균 높이 | **0.973** | **0.28** | 17.1%² | 39.9% | 0.772 | **0.989** |
+| E3bft | YOLO11m KITTI 미세조정 | 핀홀 · 미세조정 박스로 보정한 유효 높이 | 0.973 | 0.28 | 13.0%² | 43.8% | 0.894 | 0.973 |
+| **E4hft** | **YOLO11m KITTI 미세조정** | **보정 높이 핀홀 + 잘린 박스만 깊이** | 0.973 | 0.28 | 12.2%² | 35.9% | **0.898** | 0.967 |
 
-¹ 경계에 닿은 박스만 깊이를 쓰므로 잘림 > 0.15 구간은 E4m과 거의 같습니다. 전체 실험(E2ft, E3, E4, E4m_raw 포함)·구간별 오차·TTC·속도는 [`results/summary.md`](results/summary.md).
+¹ 경계에 닿은 박스만 깊이를 쓰므로 잘림 > 0.15 구간은 E4m과 거의 같습니다.
+² 미세조정 모델은 가려지거나 잘린 어려운 객체를 더 많이 잡아 매칭 쌍이 17,896개(사전학습 16,178개)라 거리 오차를 사전학습 행과 직접 비교할 수는 없습니다.
+전체 실험(E3, E4, E4m_raw 포함)·구간별 오차·TTC·속도는 [`results/summary.md`](results/summary.md).
+
+**최종 시스템은 E4hft입니다.** KITTI로 미세조정한 YOLO11m이 검출을 맡고, 거리는 그 검출기 박스로 보정한 높이를 쓴 핀홀로 추정하되 화면 경계에 걸린 박스만 Depth Anything V2 미터 깊이로 바꿉니다. 위험 등급은 추정한 (Z, X)에 기하 규칙을 적용합니다. v2(E1)와 비교하면 위험 등급 프레임 Macro-F1이 0.30에서 0.90으로, DANGER 재현율이 0.06에서 0.97로 오릅니다.
 
 ![distance error](results/figures/distance_error_bins.png)
 
 ### 연구 질문에 대한 답
 
-- **RQ1 — 검출기만 바꿔도 좋아지는가? → 그렇다, 압도적으로.** v2 고전 검출기는 KITTI에서 GT 객체의 1.3%만 IoU 0.5로 잡고 프레임당 6개의 오검출(수풀·그림자·하늘 경계)을 냅니다. YOLO로 바꾸면 재현율 93%, 오검출 1개/프레임이 되고, 같은 기하 규칙에서 위험 등급 Macro-F1이 0.30 → 0.80, DANGER 재현율이 0.06 → 0.97로 오릅니다.
+- **RQ1 — 검출기만 바꿔도 좋아지는가? → 그렇다, 압도적으로.** v2 고전 검출기는 KITTI에서 GT 객체의 1.3%만 IoU 0.5로 잡고 프레임당 6개의 오검출(수풀·그림자·하늘 경계)을 냅니다. YOLO로 바꾸면 재현율 93%, 오검출 1개/프레임이 되고, 같은 기하 규칙에서 위험 등급 Macro-F1이 0.30 → 0.80, DANGER 재현율이 0.06 → 0.97로 오릅니다. KITTI train 분할로 20 에폭 미세조정하면 Car AP 0.90 → 0.97, Cyclist AP 0.30 → 0.85, 오검출 0.99 → 0.28개/프레임이 됩니다.
 - **부수 발견 — v2 위험 점수 공식은 물리적 위험과 맞지 않는다.** 화면 중앙 근접도·크기·특징점으로 만든 v2 점수는 검출이 좋아지면 거의 모든 프레임을 DANGER로 판정합니다(프레임 Macro-F1 0.05, SAFE 예측 0건). 추정한 거리 (Z, X)에 GT와 같은 규칙을 적용하는 것이 훨씬 낫습니다. 그래서 위의 위험 등급 열은 기하 규칙 결과이고, v2 공식 결과는 `results/summary.md`에 그대로 남겨 두었습니다.
-- **RQ2 — 거리 오차는 어디서 오는가? → 주로 "평균 높이 가정"과 "잘림".** E2의 매칭 쌍에서 로그 오차를 정확히 분해하면 산포는 높이 가정 ±17.7%, 박스 오차 ±8.3%, 2D 박스≠3D 높이 잔차 ±14.1%이고, 잔차는 0–10 m(화면 밖으로 잘린 차량)에 몰려 있습니다. 편향은 서로 상쇄됩니다(박스 +5.5%, 높이 −6.1%, 잔차 −7.5%). 그래서 GT 박스(E5)가 YOLO 박스(E2)보다 오히려 오차가 크고, GT 박스로 학습한 유효 높이(E3)는 YOLO 박스에 쓰면 과보정됩니다. **높이 통계는 추론에 쓰는 검출기의 박스로 보정해야 합니다(E3b).**
+- **RQ2 — 거리 오차는 어디서 오는가? → 주로 "평균 높이 가정"과 "잘림".** E2의 매칭 쌍에서 로그 오차를 정확히 분해하면 산포는 높이 가정 ±17.7%, 박스 오차 ±8.3%, 2D 박스≠3D 높이 잔차 ±14.1%이고, 잔차는 0–10 m(화면 밖으로 잘린 차량)에 몰려 있습니다. 편향은 서로 상쇄됩니다(박스 +5.5%, 높이 −6.1%, 잔차 −7.5%). 그래서 GT 박스(E5)가 YOLO 박스(E2)보다 오히려 오차가 크고, GT 박스로 학습한 유효 높이(E3)는 YOLO 박스에 쓰면 과보정됩니다. **높이 통계는 추론에 쓰는 검출기의 박스로 보정해야 합니다(E3b).** 미세조정 모델에서도 같은 일이 반복됩니다. 박스가 GT처럼 커지자 평균 높이(E2ft)의 오차가 17.1%로 늘었고, 그 박스로 다시 보정하자(E3bft) 13.0%로 줄었습니다.
 - **RQ3 — 단안 깊이가 원거리 오차를 줄이는가? → 원거리는 아니고, 근거리·잘린 객체에서 줄인다.** 상대 깊이 모델(E4)은 원거리 외삽에서 오차가 커져(40 m+ 33.7%) 핀홀보다 나쁩니다. 미터 깊이 모델(E4m)은 잘린 객체 오차를 46% → 26%로 줄이지만 원거리는 여전히 핀홀이 낫습니다. 두 방식을 박스가 화면 경계에 닿는지로 나눠 쓰는 하이브리드(E4h)가 전체 상대 오차 11.7%, MAE 2.98 m로 가장 좋습니다.
 
-### 질적 비교 (같은 프레임, 왼쪽 E1 v2 · 오른쪽 E4h)
+### TTC (KITTI Tracking 21개 시퀀스, GT TTC < 5 s)
 
-![fixed](results/gallery/fixed_E1_vs_E4h.jpg)
+| 방법 | 검출 | 매칭 쌍 | 커버리지 | 중앙 절대 오차 | \|오차\| < 1 s |
+|---|---|:---:|:---:|:---:|:---:|
+| v2 원식 `area / dArea` | v2 고전 (E1) | 215 | 44% | 1.44 s | 38% |
+| v2 원식 `area / dArea` | YOLO (E3b) | 15,768 | 79% | 1.38 s | 32% |
+| **박스 높이 스케일** `k·Δt/(s−1)` | YOLO (E3b) | 15,768 | 84% | **0.36 s** | **75%** |
+| 핀홀 거리 차분 `Z / (−dZ/dt)` | YOLO (E3b) | 15,768 | 84% | 0.37 s | 75% |
+| 단안 깊이 거리 차분 | YOLO (E4m) | 15,768 | 78% | 0.83 s | 56% |
 
-흰 박스는 GT(거리와 GT 등급 첫 글자), 색 박스는 예측(초록 SAFE · 노랑 CAUTION · 빨강 DANGER). 놓친 DANGER와 오경보 사례는 [`results/gallery/`](results/gallery/).
+v2 식은 면적(∝ 1/Z²)을 높이처럼 다뤄 TTC를 약 절반으로 냅니다. 스케일 식으로 고치면 오차가 1/4로 줄어듭니다. 단안 깊이는 프레임마다 스케일을 따로 맞추므로 거리가 프레임 간에 흔들려 차분 TTC에는 불리합니다. 평균 절대 오차(약 1.5 s)는 박스 높이 변화가 거의 잡히지 않아 예측이 10 s를 넘는 3%의 이상치(평균 오차 25.6 s)에 끌려 올라가므로 중앙값을 함께 봅니다. 스케일 TTC의 중앙 오차는 GT TTC가 짧을수록 작습니다: 0–1 s 구간 0.16 s, 1–2 s 0.19 s, 4–5 s 1.17 s. 경보에 가장 중요한 구간에서 가장 정확합니다.
+
+### 속도 (val 200장, 이미지 디코딩 제외, 경합 없이 측정)
+
+| ID | 장치 | FPS | 검출 ms | 거리 ms | 전처리 + 추적·위험도 ms |
+|:---:|:---:|:---:|:---:|:---:|:---:|
+| E1 v2 | CPU | 67.1 | 4.6 | 0.0 | 10.3 |
+| E2 YOLO | GPU | 39.4 | 11.6 | 0.0 | 13.8 |
+| E2 YOLO | CPU | 5.3 | 175.0 | 0.0 | 14.1 |
+| E4 상대 깊이 (매 프레임) | GPU | 17.6 | 12.4 | 30.6 | 13.9 |
+| **E4hft 최종** | GPU | **24.7** | 11.5 | 15.2 | 13.9 |
+| E4hft 최종 | CPU | 1.5 | 155.8 | 517.0 | 14.8 |
+
+RTX 5060 Ti 16GB, Core Ultra 5 245KF (WSL2). E4h/E4hft는 화면 경계에 닿은 박스가 있는 프레임(val의 약 절반)에서만 깊이 모델을 돌립니다. v2에서 이식한 Harris·SIFT·HOG 특징과 차선 검출이 CPU에서 프레임당 약 14 ms를 차지하는데, 기하 규칙 위험 등급에는 쓰이지 않으므로 다음 버전에서 걷어낼 수 있습니다.
+
+### 질적 비교 (같은 프레임, 왼쪽 E1 v2 · 오른쪽 E4hft 최종)
+
+![fixed](results/gallery/fixed_E1_vs_E4hft.jpg)
+
+흰 박스는 GT(거리와 GT 등급 첫 글자), 색 박스는 예측(초록 SAFE · 노랑 CAUTION · 빨강 DANGER).
+
+**실패 사례.** val에서 E4hft가 DANGER 프레임을 놓친 경우는 6건이고, GT SAFE 프레임에 DANGER를 낸 경우는 0건입니다([`results/gallery/missed_danger_E1_vs_E4hft.jpg`](results/gallery/missed_danger_E1_vs_E4hft.jpg)). 놓친 6건은 거리는 맞지만(예: 7.5 m vs GT 7 m) 횡방향 거리가 문제였습니다.
+- **차로 경계를 걷는 보행자:** \|X\|가 1.8 m 경계 바로 바깥으로 추정되어 CAUTION이 되었습니다.
+- **화면 가장자리에서 잘린 차량:** 박스 중심이 화면 안쪽으로 치우쳐 X가 틀렸습니다.
+
+경계에서 등급이 뚝 끊기지 않도록 히스테리시스를 두거나, X를 박스 중심 대신 박스 하단 접지점으로 추정하는 것이 다음 개선 후보입니다.
 
 ---
 
@@ -153,8 +191,9 @@ flowchart LR
 | E3 / E3a / E3b | 높이 통계: GT 박스 기준 유효 높이 / 3D 평균 높이 / YOLO 박스 기준 유효 높이 | E3가 E2보다 나빠진 원인(박스 정의 차이) 확인 |
 | E4m / E4m_raw | Depth Anything V2 **Metric-Outdoor** + 단일 스케일 보정 / 보정 없음 | 상대 깊이(E4)의 원거리 외삽 실패 |
 | E4h | 경계에 닿은 박스만 미터 깊이, 나머지 핀홀 | E4m이 잘린 객체에서만 핀홀보다 나음 |
+| E3bft / E4hft | 미세조정 YOLO + 그 박스로 보정한 높이 (+ 경계 융합) | 최종 시스템 조합 |
 
-**평가 규칙 요약.** 데이터 분할은 프레임 ID를 seed 0으로 섞어 50:50(train 3,740 / val 3,741), 높이 통계·미세조정은 train만 씁니다. 검출 AP는 IoU 0.5, KITTI moderate 조건(박스 높이 ≥ 25 px, occluded ≤ 1, truncated ≤ 0.3), 40점 보간이며 DontCare 영역 검출과 Car 평가에서의 Truck은 무시합니다. 거리·위험 등급은 클래스 무관 IoU ≥ 0.5 매칭이고, 놓친 GT는 SAFE 예측, 오검출은 GT SAFE로 셉니다. 고전 검출기는 신뢰도가 없어 AP가 단일 PR 점이 되고, 재현율 2.5% 미만이면 R40 AP는 0입니다.
+**평가 규칙 요약.** 데이터 분할은 프레임 ID를 seed 0으로 섞어 50:50(train 3,740 / val 3,741), 높이 통계·미세조정은 train만 씁니다. 검출 AP는 IoU 0.5, KITTI moderate 조건(박스 높이 ≥ 25 px, occluded ≤ 1, truncated ≤ 0.3), 40점 보간이며 DontCare 영역 검출과 Car 평가에서의 Truck은 무시합니다. 거리·위험 등급은 클래스 무관 IoU ≥ 0.5 매칭이고, 놓친 GT는 SAFE 예측, 오검출은 GT SAFE로 셉니다. 고전 검출기는 신뢰도가 없어 AP가 단일 PR 점이 되고, 재현율 2.5% 미만이면 R40 AP는 0입니다. 미세조정 모델의 높이 보정(E3bft, E4hft)은 그 모델이 학습한 train 분할에서 했으므로, 학습 이미지에서 박스가 더 정확하게 나와 보정이 약간 낙관적일 수 있습니다. 그래도 평가는 val 분할이라 수치 자체에 누수는 없습니다.
 
 ### 지표
 
@@ -194,12 +233,15 @@ uv run python scripts/calibrate_detector_heights.py \
     --config configs/E2.yaml --key yolo11m                         # E3b 검출기 박스 보정 (train)
 uv run python scripts/run_experiment.py --config configs/E2.yaml  # 실험 하나 (val)
 uv run python scripts/run_experiment.py --config configs/E1.yaml --detector yolo   # 검출기만 교체
-uv run python scripts/finetune_yolo.py                            # E2ft 가중치
+uv run python scripts/finetune_yolo.py                            # E2ft 가중치 (weights/yolo11m_kitti.pt)
+uv run python scripts/calibrate_detector_heights.py \
+    --config configs/E2ft.yaml --key yolo11m_kitti                 # E3bft/E4hft 높이 보정
+uv run python scripts/run_experiment.py --config configs/E4hft.yaml  # 최종 시스템
 uv run python scripts/eval_ttc.py --configs configs/E1.yaml configs/E3b.yaml configs/E4m.yaml
 uv run python scripts/benchmark_speed.py --configs configs/E*.yaml [--device cpu]
 uv run python scripts/make_report.py                              # results/summary.md + 그래프
-uv run python scripts/make_gallery.py --a E1 --b E4h --key risk_geo
-uv run python scripts/demo.py --config configs/E4h.yaml --kitti-seq 0001 --gt --out results/demo.mp4
+uv run python scripts/make_gallery.py --a E1 --b E4hft --key risk_geo
+uv run python scripts/demo.py --config configs/E4hft.yaml --kitti-seq 0001 --gt --out results/demo.mp4
 uv run pytest
 ```
 
@@ -207,7 +249,7 @@ uv run pytest
 
 ```
 Hybrid-Forward-Collision-Warning/
-├── configs/              실험별 설정 (E0 ~ E5, E2ft, E3a/b, E4m/h) · height_stats.json
+├── configs/              실험별 설정 (E0 ~ E5, E2ft, E3a/b/bft, E4m/h/hft) · height_stats.json
 ├── scripts/              download_kitti.sh · run_experiment.py · eval_ttc.py · finetune_yolo.py
 │                         compute_height_stats.py · calibrate_detector_heights.py
 │                         benchmark_speed.py · make_report.py · make_gallery.py · demo.py

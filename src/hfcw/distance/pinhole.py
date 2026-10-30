@@ -15,7 +15,6 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple
 
 from hfcw.data.kitti import Calib
 from hfcw.types import CAR, CYCLIST, PEDESTRIAN, TRUCK, Detection
@@ -25,7 +24,7 @@ DEFAULT_STATS = Path(__file__).resolve().parents[3] / "configs" / "height_stats.
 
 
 def load_height_table(mode: str, stats_path: Path = DEFAULT_STATS,
-                      det_key: str = "yolo11m") -> Dict[str, float]:
+                      det_key: str = "yolo11m") -> dict[str, float]:
     if mode == "mean":
         return dict(V2_MEAN_HEIGHTS)
     stats = json.loads(Path(stats_path).read_text())
@@ -39,11 +38,11 @@ def load_height_table(mode: str, stats_path: Path = DEFAULT_STATS,
 
 
 class PinholeEstimator:
-    def __init__(self, heights: Dict[str, float]):
+    def __init__(self, heights: dict[str, float]):
         self.heights = heights
 
     @classmethod
-    def from_config(cls, cfg: dict) -> "PinholeEstimator":
+    def from_config(cls, cfg: dict) -> PinholeEstimator:
         return cls(load_height_table(cfg.get("height", "mean"),
                                      Path(cfg.get("stats", DEFAULT_STATS)),
                                      cfg.get("det_key", "yolo11m")))
@@ -51,20 +50,20 @@ class PinholeEstimator:
     def height_of(self, det: Detection) -> float:
         return self.heights.get(det.cls, self.heights["unknown"])
 
-    def distance(self, det: Detection, calib: Calib) -> Optional[float]:
+    def distance(self, det: Detection, calib: Calib) -> float | None:
         if det.height <= 1:
             return None
         return float(min(max(self.height_of(det) * calib.fy / det.height, 0.5), 300.0))
 
     @staticmethod
-    def lateral(det: Detection, z: Optional[float], calib: Calib) -> Optional[float]:
+    def lateral(det: Detection, z: float | None, calib: Calib) -> float | None:
         """X = (u − cx)·Z / fx, u는 박스 중심."""
         if z is None:
             return None
         return float((det.cx - calib.cx) * z / calib.fx)
 
-    def estimate(self, img, dets: List[Detection],
-                 calib: Calib) -> List[Tuple[Optional[float], Optional[float]]]:
+    def estimate(self, img, dets: list[Detection],
+                 calib: Calib) -> list[tuple[float | None, float | None]]:
         out = []
         for d in dets:
             z = self.distance(d, calib)

@@ -7,7 +7,6 @@ TTC = k·Δt / (s − 1) 을 쓰고 (Δt = 1/fps), v2 식은 비교용으로 남
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Dict, List, Optional, Tuple
 
 import cv2
 import numpy as np
@@ -19,22 +18,22 @@ from hfcw.types import Detection, box_iou
 class Track:
     track_id: int
     det: Detection
-    heights: List[float] = field(default_factory=list)
-    areas: List[float] = field(default_factory=list)
-    distances: List[Optional[float]] = field(default_factory=list)
-    centroids: List[Tuple[float, float]] = field(default_factory=list)
-    keypoints: Optional[np.ndarray] = None
+    heights: list[float] = field(default_factory=list)
+    areas: list[float] = field(default_factory=list)
+    distances: list[float | None] = field(default_factory=list)
+    centroids: list[tuple[float, float]] = field(default_factory=list)
+    keypoints: np.ndarray | None = None
     age: int = 0
     missed: int = 0
 
     @property
-    def velocity(self) -> Tuple[float, float]:
+    def velocity(self) -> tuple[float, float]:
         if len(self.centroids) < 2:
             return (0.0, 0.0)
         (x0, y0), (x1, y1) = self.centroids[-2], self.centroids[-1]
         return (x1 - x0, y1 - y0)
 
-    def ttc_v2(self, fps: float) -> Optional[float]:
+    def ttc_v2(self, fps: float) -> float | None:
         """v2 원식 (면적 증가율), 초 단위로 환산."""
         if len(self.areas) < 2:
             return None
@@ -43,7 +42,7 @@ class Track:
             return None
         return float(np.clip(prev / (now - prev), 0.5, 99.0)) / fps
 
-    def ttc_scale(self, fps: float, k: int = 3) -> Optional[float]:
+    def ttc_scale(self, fps: float, k: int = 3) -> float | None:
         """박스 높이 스케일 변화 기반 TTC (초). 접근 중이 아니면 None."""
         if len(self.heights) <= k:
             return None
@@ -52,7 +51,7 @@ class Track:
             return None
         return float(min(k / fps / (s - 1.0), 99.0))
 
-    def ttc_distance(self, fps: float, k: int = 3) -> Optional[float]:
+    def ttc_distance(self, fps: float, k: int = 3) -> float | None:
         """추정 거리 차분 기반 TTC (초): Z / (−dZ/dt)."""
         if len(self.distances) <= k:
             return None
@@ -70,27 +69,27 @@ class ObjectTracker:
                      criteria=(cv2.TERM_CRITERIA_EPS | cv2.TERM_CRITERIA_COUNT, 10, 0.03))
 
     def __init__(self, max_missed: int = 5, iou_thresh: float = 0.25, use_lk: bool = True):
-        self.tracks: Dict[int, Track] = {}
+        self.tracks: dict[int, Track] = {}
         self.next_id = 0
         self.max_missed = max_missed
         self.iou_thresh = iou_thresh
         self.use_lk = use_lk
-        self.prev_gray: Optional[np.ndarray] = None
+        self.prev_gray: np.ndarray | None = None
 
     def reset(self):
         self.tracks.clear()
         self.next_id = 0
         self.prev_gray = None
 
-    def update(self, dets: List[Detection], gray: np.ndarray,
-               distances: Optional[List[Optional[float]]] = None) -> List[Optional[Track]]:
+    def update(self, dets: list[Detection], gray: np.ndarray,
+               distances: list[float | None] | None = None) -> list[Track | None]:
         """검출 목록을 받아 트랙을 갱신하고, 각 검출에 대응하는 트랙을 돌려줍니다."""
         distances = distances if distances is not None else [None] * len(dets)
         if self.use_lk and self.prev_gray is not None and self.tracks:
             self._update_lk(gray)
 
         tracks = list(self.tracks.values())
-        assigned: List[Optional[Track]] = [None] * len(dets)
+        assigned: list[Track | None] = [None] * len(dets)
         if tracks and dets:
             iou = box_iou(np.stack([t.det.box for t in tracks]), np.stack([d.box for d in dets]))
             # 그리디 매칭 (IoU 큰 순서)
@@ -132,7 +131,7 @@ class ObjectTracker:
         self.prev_gray = gray
         return assigned
 
-    def _init_keypoints(self, gray: np.ndarray, det: Detection) -> Optional[np.ndarray]:
+    def _init_keypoints(self, gray: np.ndarray, det: Detection) -> np.ndarray | None:
         h, w = gray.shape
         x1, y1 = max(det.x, 0), max(det.y, 0)
         x2, y2 = min(det.x + det.w, w), min(det.y + det.h, h)

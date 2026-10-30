@@ -15,7 +15,6 @@ KITTI로 미세조정한 가중치(클래스 이름이 이미 KITTI)도 그대�
 from __future__ import annotations
 
 from pathlib import Path
-from typing import List
 
 import numpy as np
 
@@ -27,8 +26,8 @@ COCO_RIDEABLE = {"bicycle", "motorcycle"}
 KITTI_NAMES = {CAR, PEDESTRIAN, CYCLIST, TRUCK}
 
 
-def merge_cyclists(people: List[Detection], rideables: List[Detection],
-                   overlap: float = 0.3) -> List[Detection]:
+def merge_cyclists(people: list[Detection], rideables: list[Detection],
+                   overlap: float = 0.3) -> list[Detection]:
     """사람 박스가 자전거 박스와 충분히 겹치면 두 박스를 합쳐 Cyclist 하나로 만든다."""
     out, used = [], set()
     for p in people:
@@ -67,7 +66,7 @@ class YoloDetector(Detector):
         self.names = names if isinstance(names, dict) else dict(enumerate(names))
         self.native_kitti = set(self.names.values()) <= KITTI_NAMES | {"Van", "DontCare"}
 
-    def detect(self, img, pre=None, frame=None) -> List[Detection]:
+    def detect(self, img, pre=None, frame=None) -> list[Detection]:
         res = self.model.predict(img, conf=self.conf, iou=self.iou, imgsz=self.imgsz,
                                  device=self.device, half=self.half, verbose=False)[0]
         if res.boxes is None or len(res.boxes) == 0:

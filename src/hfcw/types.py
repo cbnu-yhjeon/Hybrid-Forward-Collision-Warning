@@ -7,7 +7,6 @@ v2의 Detection은 정수 x, y, w, h를 썼습니다. v3에서는 YOLO 출력을
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Optional
 
 import numpy as np
 
@@ -31,9 +30,9 @@ class Detection:
     y2: float
     score: float = 1.0
     cls: str = "unknown"
-    contour: Optional[np.ndarray] = field(default=None, repr=False)
+    contour: np.ndarray | None = field(default=None, repr=False)
     # 컨투어 기반 검출기는 실제 컨투어 면적을 씀 (v1 크기 점수 재현용)
-    contour_area: Optional[float] = None
+    contour_area: float | None = None
 
     # ── v2 호환 프로퍼티 ────────────────────────────────────────────────
     @property
@@ -80,11 +79,11 @@ class ObjectEstimate:
     """한 검출에 대한 파이프라인 최종 출력."""
 
     det: Detection
-    distance_m: Optional[float] = None   # 전방 거리 Z 추정
-    lateral_m: Optional[float] = None    # 횡방향 X 추정 (카메라 기준, 오른쪽 +)
+    distance_m: float | None = None   # 전방 거리 Z 추정
+    lateral_m: float | None = None    # 횡방향 X 추정 (카메라 기준, 오른쪽 +)
     in_lane: bool = True
-    track_id: Optional[int] = None
-    ttc_s: Optional[float] = None
+    track_id: int | None = None
+    ttc_s: float | None = None
     risk_v2: int = SAFE                 # v2 점수 공식 등급
     risk_v2_score: float = 0.0
     risk_geo: int = SAFE                # 추정 (Z, X)에 GT와 같은 규칙을 적용한 등급

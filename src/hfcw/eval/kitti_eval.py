@@ -14,7 +14,7 @@
 from __future__ import annotations
 
 from collections import defaultdict
-from typing import Dict, Iterable, List, Optional, Tuple
+from collections.abc import Iterable
 
 import numpy as np
 
@@ -46,7 +46,7 @@ def _dontcare_overlap(boxes: np.ndarray, dc: np.ndarray) -> np.ndarray:
     return (ix * iy / np.maximum(area[:, None], 1e-6)).max(axis=1)
 
 
-def _ap_r40(scores: np.ndarray, tps: np.ndarray, n_pos: int) -> Tuple[float, list]:
+def _ap_r40(scores: np.ndarray, tps: np.ndarray, n_pos: int) -> tuple[float, list]:
     if n_pos == 0:
         return float("nan"), []
     order = np.argsort(-scores, kind="stable")
@@ -65,7 +65,7 @@ def _ap_r40(scores: np.ndarray, tps: np.ndarray, n_pos: int) -> Tuple[float, lis
     return ap / 40, curve
 
 
-def _match_detection(frame: Frame, preds: List[dict], cls: Optional[str]):
+def _match_detection(frame: Frame, preds: list[dict], cls: str | None):
     """한 프레임, 한 클래스(None=클래스 무관)에 대해 (score, tp) 리스트와 양성 수, FP 수를 반환."""
     objs = [o for o in frame.objects if o.cls is not None and not o.is_dontcare]
     dc = np.array([o.box for o in frame.objects if o.is_dontcare]).reshape(-1, 4)
@@ -102,7 +102,7 @@ def _match_detection(frame: Frame, preds: List[dict], cls: Optional[str]):
     return out, len(pos), n_fp
 
 
-def detection_metrics(frames: Dict[str, Frame], preds: Dict[str, dict]) -> dict:
+def detection_metrics(frames: dict[str, Frame], preds: dict[str, dict]) -> dict:
     res = {}
     for cls in list(EVAL_CLASSES) + [None]:
         name = cls or "All"
@@ -127,8 +127,8 @@ def detection_metrics(frames: Dict[str, Frame], preds: Dict[str, dict]) -> dict:
     return res
 
 
-def match_any(frame: Frame, preds: List[dict]) -> Tuple[List[Tuple[dict, Object3D]],
-                                                         List[Object3D], List[dict]]:
+def match_any(frame: Frame, preds: list[dict]) -> tuple[list[tuple[dict, Object3D]],
+                                                         list[Object3D], list[dict]]:
     """클래스 무관 그리디 매칭 (거리·위험 등급 평가용). DontCare 위 검출은 버린다."""
     gts = risk_objects(frame.objects)
     dc = np.array([o.box for o in frame.objects if o.is_dontcare]).reshape(-1, 4)
@@ -151,7 +151,7 @@ def match_any(frame: Frame, preds: List[dict]) -> Tuple[List[Tuple[dict, Object3
     return pairs, missed, fps
 
 
-def distance_pairs(frames: Dict[str, Frame], preds: Dict[str, dict]) -> List[dict]:
+def distance_pairs(frames: dict[str, Frame], preds: dict[str, dict]) -> list[dict]:
     rows = []
     for fid, fr in frames.items():
         pairs, _, _ = match_any(fr, preds[fid]["objects"])
@@ -171,11 +171,11 @@ def _err_stats(z_gt: np.ndarray, z: np.ndarray) -> dict:
     if len(z_gt) == 0:
         return {"n": 0, "mae_m": None, "rel_err": None, "median_rel_err": None}
     ae = np.abs(z - z_gt)
-    return {"n": int(len(z_gt)), "mae_m": float(ae.mean()),
+    return {"n": len(z_gt), "mae_m": float(ae.mean()),
             "rel_err": float((ae / z_gt).mean()), "median_rel_err": float(np.median(ae / z_gt))}
 
 
-def distance_metrics(rows: List[dict]) -> dict:
+def distance_metrics(rows: list[dict]) -> dict:
     if not rows:
         return {}
     z_gt = np.array([r["z_gt"] for r in rows])
@@ -197,7 +197,7 @@ def distance_metrics(rows: List[dict]) -> dict:
     return out
 
 
-def _confusion_stats(pairs: Iterable[Tuple[int, int]]) -> dict:
+def _confusion_stats(pairs: Iterable[tuple[int, int]]) -> dict:
     cm = np.zeros((3, 3), dtype=int)  # [gt, pred]
     for g, p in pairs:
         cm[g, p] += 1
@@ -215,7 +215,7 @@ def _confusion_stats(pairs: Iterable[Tuple[int, int]]) -> dict:
             "danger_precision": per["DANGER"]["precision"], "per_class": per}
 
 
-def risk_metrics(frames: Dict[str, Frame], preds: Dict[str, dict], key: str) -> dict:
+def risk_metrics(frames: dict[str, Frame], preds: dict[str, dict], key: str) -> dict:
     """key: 'risk_v2' 또는 'risk_geo'. 객체 단위·프레임 단위 혼동행렬."""
     obj_pairs, frame_pairs = [], []
     for fid, fr in frames.items():
@@ -230,7 +230,7 @@ def risk_metrics(frames: Dict[str, Frame], preds: Dict[str, dict], key: str) -> 
     return {"object": _confusion_stats(obj_pairs), "frame": _confusion_stats(frame_pairs)}
 
 
-def speed_metrics(preds: Dict[str, dict]) -> dict:
+def speed_metrics(preds: dict[str, dict]) -> dict:
     t = defaultdict(list)
     for p in preds.values():
         for k, v in p.get("timings", {}).items():
@@ -243,7 +243,7 @@ def speed_metrics(preds: Dict[str, dict]) -> dict:
     return out
 
 
-def evaluate(frames: Dict[str, Frame], preds: Dict[str, dict]) -> Tuple[dict, List[dict]]:
+def evaluate(frames: dict[str, Frame], preds: dict[str, dict]) -> tuple[dict, list[dict]]:
     rows = distance_pairs(frames, preds)
     has_dist = any(o.get("z") is not None for p in preds.values() for o in p["objects"])
     return {

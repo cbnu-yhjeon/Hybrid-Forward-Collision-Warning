@@ -5,8 +5,6 @@ v2 detection.py · classifier.py 로직을 그대로 옮기고 Detector 인터�
 """
 from __future__ import annotations
 
-from typing import List, Optional
-
 import cv2
 import numpy as np
 
@@ -34,7 +32,7 @@ def _det(x, y, w, h, area, contour=None, cls=CAR) -> Detection:
                      contour=contour, contour_area=float(area))
 
 
-def detect_contours(edges: np.ndarray, img_shape: tuple) -> List[Detection]:
+def detect_contours(edges: np.ndarray, img_shape: tuple) -> list[Detection]:
     """Canny → Morphology → Contour → 차량 크기 필터"""
     img_h, img_w = img_shape[:2]
     kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (3, 3))
@@ -50,7 +48,7 @@ def detect_contours(edges: np.ndarray, img_shape: tuple) -> List[Detection]:
     return dets[:MAX_DETS]
 
 
-def segment_road_objects(gray: np.ndarray, img_shape: tuple) -> List[Detection]:
+def segment_road_objects(gray: np.ndarray, img_shape: tuple) -> list[Detection]:
     """Otsu + ConnectedComponents 보조 검출"""
     img_h, img_w = img_shape[:2]
     _, binary = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY_INV + cv2.THRESH_OTSU)
@@ -65,7 +63,7 @@ def segment_road_objects(gray: np.ndarray, img_shape: tuple) -> List[Detection]:
     return dets[:MAX_DETS]
 
 
-def filter_statistical_outliers(dets: List[Detection]) -> List[Detection]:
+def filter_statistical_outliers(dets: list[Detection]) -> list[Detection]:
     """면적 중앙값 대비 20배 초과 / 5% 미만 박스 제거"""
     if len(dets) < 3:
         return dets
@@ -74,7 +72,7 @@ def filter_statistical_outliers(dets: List[Detection]) -> List[Detection]:
     return kept or dets
 
 
-def apply_watershed(gray: np.ndarray, dets: List[Detection], img_shape: tuple) -> List[Detection]:
+def apply_watershed(gray: np.ndarray, dets: list[Detection], img_shape: tuple) -> list[Detection]:
     """IoU > 0.4로 겹친 박스 쌍을 Watershed로 분리. 실패 시 원본 유지."""
     if len(dets) < 2:
         return dets
@@ -136,7 +134,7 @@ def apply_watershed(gray: np.ndarray, dets: List[Detection], img_shape: tuple) -
 _hog_people = None
 
 
-def _nms(rects: np.ndarray, weights: np.ndarray, thresh: float = 0.4) -> List[int]:
+def _nms(rects: np.ndarray, weights: np.ndarray, thresh: float = 0.4) -> list[int]:
     boxes = np.column_stack([rects[:, 0], rects[:, 1],
                              rects[:, 0] + rects[:, 2], rects[:, 1] + rects[:, 3]])
     order, keep = list(np.argsort(-weights)), []
@@ -149,7 +147,7 @@ def _nms(rects: np.ndarray, weights: np.ndarray, thresh: float = 0.4) -> List[in
     return keep
 
 
-def detect_pedestrians(img: np.ndarray) -> List[Detection]:
+def detect_pedestrians(img: np.ndarray) -> list[Detection]:
     global _hog_people
     if _hog_people is None:
         _hog_people = cv2.HOGDescriptor()
@@ -205,7 +203,7 @@ class ClassicalV2Detector(Detector):
     def __init__(self, use_pedestrian_hog: bool = True):
         self.use_ped = use_pedestrian_hog
 
-    def detect(self, img, pre: Optional[Preprocessed] = None, frame=None):
+    def detect(self, img, pre: Preprocessed | None = None, frame=None):
         pre = pre or preprocess(img)
         dets = detect_contours(pre.edges, img.shape)
         if not dets:

@@ -20,10 +20,10 @@ import numpy as np
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
-from hfcw.data.kitti import KittiObject  # noqa: E402
-from hfcw.eval.gt_risk import frame_level  # noqa: E402
-from hfcw.pipeline.visualize import draw  # noqa: E402
-from hfcw.types import DANGER, SAFE, Detection, ObjectEstimate  # noqa: E402
+from hfcw.data.kitti import KittiObject
+from hfcw.eval.gt_risk import frame_level
+from hfcw.pipeline.visualize import draw
+from hfcw.types import DANGER, SAFE, Detection, ObjectEstimate
 
 
 def load_preds(name):

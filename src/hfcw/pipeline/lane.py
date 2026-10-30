@@ -1,12 +1,10 @@
 """Hough 차선 검출 (v2 Phase 1, 그대로 이식)."""
 from __future__ import annotations
 
-from typing import List, Optional, Tuple
-
 import cv2
 import numpy as np
 
-Segment = Tuple[int, int, int, int]
+Segment = tuple[int, int, int, int]
 
 
 def detect_lanes(edges: np.ndarray, img_shape: tuple):
@@ -17,8 +15,8 @@ def detect_lanes(edges: np.ndarray, img_shape: tuple):
 
     lines = cv2.HoughLinesP(roi_edges, 1, np.pi / 180, threshold=50,
                             minLineLength=80, maxLineGap=60)
-    left: List[Segment] = []
-    right: List[Segment] = []
+    left: list[Segment] = []
+    right: list[Segment] = []
     if lines is not None:
         for x1, y1, x2, y2 in lines.reshape(-1, 4):
             if abs(x2 - x1) < 1:
@@ -30,7 +28,7 @@ def detect_lanes(edges: np.ndarray, img_shape: tuple):
     return left, right, _build_lane_mask(left, right, h, w)
 
 
-def fit_lane_line(lines: List[Segment], h: int) -> Optional[Segment]:
+def fit_lane_line(lines: list[Segment], h: int) -> Segment | None:
     if not lines:
         return None
     pts = np.array([p for x1, y1, x2, y2 in lines for p in ((x1, y1), (x2, y2))],
@@ -52,7 +50,7 @@ def _build_lane_mask(left, right, h: int, w: int) -> np.ndarray:
     return mask
 
 
-def is_in_lane(cx: float, cy: float, lane_mask: Optional[np.ndarray]) -> bool:
+def is_in_lane(cx: float, cy: float, lane_mask: np.ndarray | None) -> bool:
     """객체 중심이 차선 내부인지. 차선 미검출 시 True (v2 동작 유지)."""
     if lane_mask is None or not lane_mask.any():
         return True

@@ -1,0 +1,9 @@
+name: E4hft
+description: "최종 시스템 — 미세조정 YOLO + 보정 높이 핀홀 + 잘린 박스만 미터 깊이"
+detector: {type: yolo, weights: weights/yolo11m_kitti.pt, conf: 0.25, imgsz: 1280}
+distance: {type: mono_depth, metric: true, scale: fit, fusion: border, height: class_effective_det, det_key: yolo11m_kitti, model: depth-anything/Depth-Anything-V2-Metric-Outdoor-Small-hf}
+preprocess: {clahe: true}
+lanes: true
+features: true
+tracking: {enabled: true, ttc: scale}
+risk: v2

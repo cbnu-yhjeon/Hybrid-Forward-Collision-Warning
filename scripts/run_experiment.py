@@ -22,9 +22,9 @@ from tqdm import tqdm
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
-from hfcw.data.kitti import KittiObject  # noqa: E402
-from hfcw.eval.kitti_eval import evaluate  # noqa: E402
-from hfcw.pipeline.fcw import FCWPipeline  # noqa: E402
+from hfcw.data.kitti import KittiObject
+from hfcw.eval.kitti_eval import evaluate
+from hfcw.pipeline.fcw import FCWPipeline
 
 
 def load_config(path: Path, detector: str | None = None) -> dict:

@@ -21,8 +21,8 @@ import cv2
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
-from hfcw.data.kitti import KittiObject  # noqa: E402
-from hfcw.types import CAR, CYCLIST, PEDESTRIAN, TRUCK  # noqa: E402
+from hfcw.data.kitti import KittiObject
+from hfcw.types import CAR, CYCLIST, PEDESTRIAN, TRUCK
 
 NAMES = [CAR, PEDESTRIAN, CYCLIST, TRUCK]
 

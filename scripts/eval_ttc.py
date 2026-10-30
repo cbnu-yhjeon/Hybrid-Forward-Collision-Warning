@@ -25,10 +25,10 @@ from tqdm import tqdm
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
-from hfcw.data.kitti import KittiTracking  # noqa: E402
-from hfcw.eval.ttc_eval import gt_ttc_table, summarize, ttc_or_none  # noqa: E402
-from hfcw.pipeline.fcw import FCWPipeline  # noqa: E402
-from hfcw.types import box_iou  # noqa: E402
+from hfcw.data.kitti import KittiTracking
+from hfcw.eval.ttc_eval import gt_ttc_table, summarize, ttc_or_none
+from hfcw.pipeline.fcw import FCWPipeline
+from hfcw.types import box_iou
 
 METHODS = ["ttc_v2", "ttc_scale", "ttc_distance"]
 

@@ -10,14 +10,12 @@ x는 image_2 카메라 기준 횡방향 거리(kitti.py에서 cam0→cam2 보정
 """
 from __future__ import annotations
 
-from typing import List
-
 from hfcw.data.kitti import Object3D
 from hfcw.pipeline.risk import level_from_geometry
 from hfcw.types import SAFE
 
 
-def risk_objects(objects: List[Object3D]) -> List[Object3D]:
+def risk_objects(objects: list[Object3D]) -> list[Object3D]:
     """위험 등급 평가 대상: DontCare와 Tram/Misc를 뺀 모든 도로 이용자."""
     return [o for o in objects if o.cls is not None and not o.is_dontcare]
 
@@ -26,5 +24,5 @@ def object_level(o: Object3D) -> int:
     return level_from_geometry(o.z, o.x)
 
 
-def frame_level(objects: List[Object3D]) -> int:
+def frame_level(objects: list[Object3D]) -> int:
     return max((object_level(o) for o in risk_objects(objects)), default=SAFE)

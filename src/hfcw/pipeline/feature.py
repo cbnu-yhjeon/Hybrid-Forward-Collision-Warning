@@ -1,8 +1,6 @@
 """Harris + SIFT + HoG 특징 (v2 Phase 2). 위험도 feature_score(10%)에 쓰입니다."""
 from __future__ import annotations
 
-from typing import List
-
 import cv2
 import numpy as np
 
@@ -19,7 +17,7 @@ def _roi(gray: np.ndarray, det: Detection) -> np.ndarray:
     return gray[y1:y2, x1:x2]
 
 
-def extract_harris(gray: np.ndarray, dets: List[Detection]) -> List[int]:
+def extract_harris(gray: np.ndarray, dets: list[Detection]) -> list[int]:
     counts = []
     for det in dets:
         roi = _roi(gray, det)
@@ -31,7 +29,7 @@ def extract_harris(gray: np.ndarray, dets: List[Detection]) -> List[int]:
     return counts
 
 
-def extract_sift(gray: np.ndarray, dets: List[Detection]) -> List[int]:
+def extract_sift(gray: np.ndarray, dets: list[Detection]) -> list[int]:
     global _sift
     if _sift is None:
         _sift = cv2.SIFT_create()
@@ -42,7 +40,7 @@ def extract_sift(gray: np.ndarray, dets: List[Detection]) -> List[int]:
     return counts
 
 
-def extract_hog(gray: np.ndarray, dets: List[Detection]) -> List[float]:
+def extract_hog(gray: np.ndarray, dets: list[Detection]) -> list[float]:
     global _hog
     if _hog is None:
         _hog = cv2.HOGDescriptor((64, 64), (16, 16), (8, 8), (8, 8), 9)

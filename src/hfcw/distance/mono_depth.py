@@ -16,8 +16,6 @@ fusion="border" (E4h): 박스가 화면 경계에 닿은(잘렸을 가능성이 
 """
 from __future__ import annotations
 
-from typing import List, Optional, Tuple
-
 import numpy as np
 
 from hfcw.data.kitti import Calib
@@ -32,7 +30,7 @@ def touches_border(det: Detection, shape, margin: float = 3.0) -> bool:
     return det.x1 <= margin or det.x2 >= w - 1 - margin or det.y2 >= h - 1 - margin
 
 
-def box_disparity(disp: np.ndarray, det: Detection) -> Optional[float]:
+def box_disparity(disp: np.ndarray, det: Detection) -> float | None:
     """박스 안쪽(가로 중앙 50%, 세로 30~90%)의 역깊이 중앙값. 배경 섞임을 줄인다."""
     h, w = disp.shape
     bw, bh = det.x2 - det.x1, det.y2 - det.y1
@@ -50,7 +48,7 @@ def weighted_median(v: np.ndarray, w: np.ndarray) -> float:
     return float(v[order][np.searchsorted(cw, cw[-1] / 2)])
 
 
-def fit_inverse_depth(d: np.ndarray, z: np.ndarray, w: np.ndarray) -> Tuple[float, float]:
+def fit_inverse_depth(d: np.ndarray, z: np.ndarray, w: np.ndarray) -> tuple[float, float]:
     """1/z ≈ a·d + b 가중 최소제곱. 실패하면 (a, 0)."""
     inv = 1.0 / z
     if len(d) >= 2 and np.ptp(d) > 1e-6:
@@ -64,7 +62,7 @@ def fit_inverse_depth(d: np.ndarray, z: np.ndarray, w: np.ndarray) -> Tuple[floa
 class MonoDepthEstimator:
     def __init__(self, pinhole: PinholeEstimator,
                  model: str = "depth-anything/Depth-Anything-V2-Small-hf",
-                 device: Optional[str] = None, metric: bool = False, scale: str = "fit",
+                 device: str | None = None, metric: bool = False, scale: str = "fit",
                  fusion: str = "none"):
         import torch
         from transformers import AutoImageProcessor, AutoModelForDepthEstimation
@@ -79,8 +77,8 @@ class MonoDepthEstimator:
         self.model = AutoModelForDepthEstimation.from_pretrained(model).to(self.device).eval()
         if self.device == "cuda":
             self.model = self.model.half()
-        self.last_disparity: Optional[np.ndarray] = None
-        self.last_fit: Tuple[float, float] = (0.0, 0.0)
+        self.last_disparity: np.ndarray | None = None
+        self.last_fit: tuple[float, float] = (0.0, 0.0)
 
     def predict_disparity(self, img_bgr: np.ndarray) -> np.ndarray:
         torch = self.torch
@@ -94,11 +92,15 @@ class MonoDepthEstimator:
                                                mode="bilinear", align_corners=False)
         return pred[0, 0].cpu().numpy()
 
-    def estimate(self, img: np.ndarray, dets: List[Detection],
-                 calib: Calib) -> List[Tuple[Optional[float], Optional[float]]]:
+    def estimate(self, img: np.ndarray, dets: list[Detection],
+                 calib: Calib) -> list[tuple[float | None, float | None]]:
         pin = [self.pinhole.distance(d, calib) for d in dets]
         if not dets:
             return []
+        if self.metric and self.fusion == "border" and not any(
+                touches_border(d, img.shape) for d in dets):
+            # 경계 융합에서는 경계 박스가 없으면 깊이를 쓰지 않으므로 추론을 건너뛴다
+            return [(z, self.pinhole.lateral(d, z, calib)) for d, z in zip(dets, pin)]
         disp = self.predict_disparity(img)
         self.last_disparity = disp
         ds = [box_disparity(disp, d) for d in dets]

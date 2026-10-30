@@ -11,22 +11,24 @@ from pathlib import Path
 import matplotlib
 
 matplotlib.use("Agg")
-import matplotlib.pyplot as plt  # noqa: E402
-import numpy as np  # noqa: E402
-import pandas as pd  # noqa: E402
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
-from hfcw.distance.pinhole import V2_MEAN_HEIGHTS  # noqa: E402
-from hfcw.eval.kitti_eval import BIN_NAMES, DIST_BINS  # noqa: E402
+from hfcw.distance.pinhole import V2_MEAN_HEIGHTS
+from hfcw.eval.kitti_eval import BIN_NAMES, DIST_BINS
 
 RES = ROOT / "results"
 FIG = RES / "figures"
-ORDER = ["E0", "E1", "E2", "E2ft", "E3", "E3a", "E3b", "E4", "E4m_raw", "E4m", "E4h", "E5"]
+ORDER = ["E0", "E1", "E2", "E2ft", "E3", "E3a", "E3b", "E3bft", "E4", "E4m_raw", "E4m", "E4h",
+         "E4hft", "E5"]
 COLORS = {"E0": "#9aa0a6", "E1": "#5f6368", "E2": "#1a73e8", "E2ft": "#174ea6",
           "E3": "#81c995", "E3a": "#34a853", "E3b": "#188038", "E4": "#fbbc04",
-          "E4m_raw": "#f6aea9", "E4m": "#e37400", "E4h": "#c5221f", "E5": "#a142f4"}
+          "E4m_raw": "#f6aea9", "E4m": "#e37400", "E4h": "#c5221f", "E5": "#a142f4",
+          "E3bft": "#0d652d", "E4hft": "#7f0000"}
 
 
 def fmt(v, p=3, pct=False):
@@ -92,7 +94,8 @@ def rq2_decomposition(pairs_csv: Path) -> pd.DataFrame | None:
 
 
 def plot_distance_bins(runs):
-    names = [n for n in runs if runs[n].get("distance")]
+    keep = ("E1", "E2", "E2ft", "E3b", "E4", "E4m", "E4h", "E4hft", "E5")
+    names = [n for n in runs if runs[n].get("distance") and n in keep]
     if not names:
         return
     x = np.arange(len(BIN_NAMES))
@@ -116,7 +119,8 @@ def plot_distance_bins(runs):
 
 
 def plot_scatter(runs):
-    names = [n for n in ("E2", "E3a", "E4m", "E4h", "E5") if (RES / n / "distance_pairs.csv").exists()]
+    names = [n for n in ("E2", "E3b", "E4m", "E4h", "E4hft")
+             if (RES / n / "distance_pairs.csv").exists()]
     if not names:
         return
     fig, axes = plt.subplots(1, len(names), figsize=(3.6 * len(names), 3.6), sharey=True)

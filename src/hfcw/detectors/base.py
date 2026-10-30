@@ -2,7 +2,6 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import List, Optional
 
 import numpy as np
 
@@ -15,8 +14,8 @@ class Detector(ABC):
     name = "base"
 
     @abstractmethod
-    def detect(self, img: np.ndarray, pre: Optional[Preprocessed] = None,
-               frame: Optional[Frame] = None) -> List[Detection]:
+    def detect(self, img: np.ndarray, pre: Preprocessed | None = None,
+               frame: Frame | None = None) -> list[Detection]:
         """BGR 이미지 → 검출 목록.
 
         pre: 파이프라인이 이미 계산한 전처리 결과 (고전 검출기가 재사용)

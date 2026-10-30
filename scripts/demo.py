@@ -20,11 +20,11 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 sys.path.insert(0, str(ROOT / "scripts"))
 
-from run_experiment import load_config  # noqa: E402
+from run_experiment import load_config
 
-from hfcw.data.kitti import Calib, KittiTracking  # noqa: E402
-from hfcw.pipeline.fcw import FCWPipeline  # noqa: E402
-from hfcw.pipeline.visualize import draw  # noqa: E402
+from hfcw.data.kitti import Calib, KittiTracking
+from hfcw.pipeline.fcw import FCWPipeline
+from hfcw.pipeline.visualize import draw
 
 
 def iter_input(args):

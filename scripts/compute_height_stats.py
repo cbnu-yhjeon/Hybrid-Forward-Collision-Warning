@@ -16,7 +16,7 @@ import numpy as np
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
-from hfcw.data.kitti import KittiObject  # noqa: E402
+from hfcw.data.kitti import KittiObject
 
 
 def main():
