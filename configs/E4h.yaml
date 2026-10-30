@@ -1,0 +1,9 @@
+name: E4h
+description: "RQ3 하이브리드 — 화면 경계에 닿은(잘린) 박스만 미터 깊이, 나머지는 핀홀(클래스별 3D 평균 높이)"
+detector: {type: yolo, weights: weights/yolo11m.pt, conf: 0.25, imgsz: 1280}
+distance: {type: mono_depth, metric: true, scale: fit, fusion: border, height: class_mean, model: depth-anything/Depth-Anything-V2-Metric-Outdoor-Small-hf}
+preprocess: {clahe: true}
+lanes: true
+features: true
+tracking: {enabled: true, ttc: scale}
+risk: v2

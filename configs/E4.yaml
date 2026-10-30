@@ -1,0 +1,9 @@
+name: E4
+description: "RQ3 — YOLO + Depth Anything V2 Small(상대 깊이), 같은 프레임 핀홀 거리로 스케일 보정"
+detector: {type: yolo, weights: weights/yolo11m.pt, conf: 0.25, imgsz: 1280}
+distance: {type: mono_depth, height: class_effective, model: depth-anything/Depth-Anything-V2-Small-hf}
+preprocess: {clahe: true}
+lanes: true
+features: true
+tracking: {enabled: true, ttc: scale}
+risk: v2

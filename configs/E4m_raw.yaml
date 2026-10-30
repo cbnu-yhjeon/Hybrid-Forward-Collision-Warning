@@ -1,0 +1,9 @@
+name: E4m_raw
+description: "E4m ablation — Metric-Outdoor 깊이를 스케일 보정 없이 그대로 사용"
+detector: {type: yolo, weights: weights/yolo11m.pt, conf: 0.25, imgsz: 1280}
+distance: {type: mono_depth, metric: true, scale: none, height: class_mean, model: depth-anything/Depth-Anything-V2-Metric-Outdoor-Small-hf}
+preprocess: {clahe: true}
+lanes: true
+features: true
+tracking: {enabled: true, ttc: scale}
+risk: v2

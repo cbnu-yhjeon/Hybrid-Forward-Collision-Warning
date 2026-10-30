@@ -1,0 +1,9 @@
+name: E2
+description: "RQ1 — 검출기만 YOLO(COCO 사전학습)로 교체, 나머지는 E1과 동일"
+detector: {type: yolo, weights: weights/yolo11m.pt, conf: 0.25, imgsz: 1280}
+distance: {type: pinhole, height: mean}
+preprocess: {clahe: true}
+lanes: true
+features: true
+tracking: {enabled: true, ttc: scale}
+risk: v2

@@ -4,7 +4,7 @@
 
 **딥러닝 검출기 + 고전 기하 파이프라인 + KITTI 정량 평가**
 
-![Status](https://img.shields.io/badge/Status-Planning-lightgrey?style=flat-square)
+![Status](https://img.shields.io/badge/Status-v3%20Implemented-success?style=flat-square)
 ![Python](https://img.shields.io/badge/Python-3.10%2B-3776AB?style=flat-square&logo=python&logoColor=white)
 ![OpenCV](https://img.shields.io/badge/OpenCV-4.x-5C3EE8?style=flat-square&logo=opencv&logoColor=white)
 ![PyTorch](https://img.shields.io/badge/PyTorch-EE4C2C?style=flat-square&logo=pytorch&logoColor=white)
@@ -16,7 +16,8 @@
 </div>
 
 > [!NOTE]
-> 🚧 **계획 단계입니다.** 아직 코드가 없고, 이 README는 프로젝트 설계서입니다. 결과 수치는 실험 후 채웁니다.
+> ✅ **v3 구현 · 평가 완료 (2026-10-30).** 모든 수치는 KITTI Object val 분할 3,741장(학습에 쓰지 않은 절반)에서 얻었습니다.
+> 전체 표와 그래프는 [`results/summary.md`](results/summary.md)에 있습니다.
 
 ---
 
@@ -40,6 +41,38 @@
 - **RQ1.** 검출기만 바꿔도 위험 등급 판단(DANGER/CAUTION/SAFE)이 얼마나 좋아지는가?
 - **RQ2.** 핀홀 거리 추정 오차 중 바운딩 박스 높이 오차와 클래스별 평균 높이 가정 오차가 각각 얼마나 기여하는가?
 - **RQ3.** 단안 깊이 추정 모델(Depth Anything 등)을 결합하면 원거리 오차가 줄어드는가?
+
+---
+
+## 📊 결과 요약
+
+| ID | 검출 | 거리 | Car AP | FP/frame | 거리 상대 오차 | 잘린 객체 오차 | 위험 등급 Macro-F1<br/>(프레임, 기하 규칙) | DANGER 재현율<br/>(프레임) |
+|:---:|---|---|:---:|:---:|:---:|:---:|:---:|:---:|
+| E0 | v1 Contour | 면적 | 0.00 | 6.32 | — | — | — | — |
+| E1 | v2 Contour+Watershed | 핀홀 · 평균 높이 | 0.00 | 6.04 | 40.3% | 92.3% | 0.304 | 0.060 |
+| E2 | YOLO11m (COCO) | 핀홀 · 평균 높이 | **0.903** | 0.99 | 15.0% | 41.2% | 0.800 | 0.967 |
+| E3a | YOLO11m | 핀홀 · 클래스별 3D 평균 높이 | 0.903 | 0.99 | 13.8% | 46.2% | 0.855 | 0.957 |
+| E3b | YOLO11m | 핀홀 · YOLO 박스로 보정한 유효 높이 | 0.903 | 0.99 | 14.3% | 48.8% | **0.869** | 0.951 |
+| E4m | YOLO11m | Depth Anything V2 Metric + 스케일 보정 | 0.903 | 0.99 | 15.4% | **26.4%** | 0.859 | 0.913 |
+| **E4h** | YOLO11m | **잘린 박스만 깊이, 나머지 핀홀** | 0.903 | 0.99 | **11.7%** | 26.5%¹ | 0.860 | 0.957 |
+| E5 | GT 박스 | 핀홀 · 평균 높이 | 1.000 | 0.00 | 17.3% | 45.4% | 0.770 | 0.995 |
+
+¹ 경계에 닿은 박스만 깊이를 쓰므로 잘림 > 0.15 구간은 E4m과 거의 같습니다. 전체 실험(E2ft, E3, E4, E4m_raw 포함)·구간별 오차·TTC·속도는 [`results/summary.md`](results/summary.md).
+
+![distance error](results/figures/distance_error_bins.png)
+
+### 연구 질문에 대한 답
+
+- **RQ1 — 검출기만 바꿔도 좋아지는가? → 그렇다, 압도적으로.** v2 고전 검출기는 KITTI에서 GT 객체의 1.3%만 IoU 0.5로 잡고 프레임당 6개의 오검출(수풀·그림자·하늘 경계)을 냅니다. YOLO로 바꾸면 재현율 93%, 오검출 1개/프레임이 되고, 같은 기하 규칙에서 위험 등급 Macro-F1이 0.30 → 0.80, DANGER 재현율이 0.06 → 0.97로 오릅니다.
+- **부수 발견 — v2 위험 점수 공식은 물리적 위험과 맞지 않는다.** 화면 중앙 근접도·크기·특징점으로 만든 v2 점수는 검출이 좋아지면 거의 모든 프레임을 DANGER로 판정합니다(프레임 Macro-F1 0.05, SAFE 예측 0건). 추정한 거리 (Z, X)에 GT와 같은 규칙을 적용하는 것이 훨씬 낫습니다. 그래서 위의 위험 등급 열은 기하 규칙 결과이고, v2 공식 결과는 `results/summary.md`에 그대로 남겨 두었습니다.
+- **RQ2 — 거리 오차는 어디서 오는가? → 주로 "평균 높이 가정"과 "잘림".** E2의 매칭 쌍에서 로그 오차를 정확히 분해하면 산포는 높이 가정 ±17.7%, 박스 오차 ±8.3%, 2D 박스≠3D 높이 잔차 ±14.1%이고, 잔차는 0–10 m(화면 밖으로 잘린 차량)에 몰려 있습니다. 편향은 서로 상쇄됩니다(박스 +5.5%, 높이 −6.1%, 잔차 −7.5%). 그래서 GT 박스(E5)가 YOLO 박스(E2)보다 오히려 오차가 크고, GT 박스로 학습한 유효 높이(E3)는 YOLO 박스에 쓰면 과보정됩니다. **높이 통계는 추론에 쓰는 검출기의 박스로 보정해야 합니다(E3b).**
+- **RQ3 — 단안 깊이가 원거리 오차를 줄이는가? → 원거리는 아니고, 근거리·잘린 객체에서 줄인다.** 상대 깊이 모델(E4)은 원거리 외삽에서 오차가 커져(40 m+ 33.7%) 핀홀보다 나쁩니다. 미터 깊이 모델(E4m)은 잘린 객체 오차를 46% → 26%로 줄이지만 원거리는 여전히 핀홀이 낫습니다. 두 방식을 박스가 화면 경계에 닿는지로 나눠 쓰는 하이브리드(E4h)가 전체 상대 오차 11.7%, MAE 2.98 m로 가장 좋습니다.
+
+### 질적 비교 (같은 프레임, 왼쪽 E1 v2 · 오른쪽 E4h)
+
+![fixed](results/gallery/fixed_E1_vs_E4h.jpg)
+
+흰 박스는 GT(거리와 GT 등급 첫 글자), 색 박스는 예측(초록 SAFE · 노랑 CAUTION · 빨강 DANGER). 놓친 DANGER와 오경보 사례는 [`results/gallery/`](results/gallery/).
 
 ---
 
@@ -112,6 +145,17 @@ flowchart LR
 | E4 | YOLO | 단안 깊이 + 핀홀로 스케일 보정 | ✅ | RQ3 |
 | E5 | GT 박스 | 핀홀 · 평균 높이 | — | RQ2: 박스 오차를 0으로 둔 상한선 |
 
+구현하면서 결과를 보고 추가한 실험:
+
+| ID | 내용 | 추가한 이유 |
+|:---:|---|---|
+| E2ft | KITTI train 분할로 미세조정한 YOLO11m | 계획서 "필요하면 미세조정" (RQ1) |
+| E3 / E3a / E3b | 높이 통계: GT 박스 기준 유효 높이 / 3D 평균 높이 / YOLO 박스 기준 유효 높이 | E3가 E2보다 나빠진 원인(박스 정의 차이) 확인 |
+| E4m / E4m_raw | Depth Anything V2 **Metric-Outdoor** + 단일 스케일 보정 / 보정 없음 | 상대 깊이(E4)의 원거리 외삽 실패 |
+| E4h | 경계에 닿은 박스만 미터 깊이, 나머지 핀홀 | E4m이 잘린 객체에서만 핀홀보다 나음 |
+
+**평가 규칙 요약.** 데이터 분할은 프레임 ID를 seed 0으로 섞어 50:50(train 3,740 / val 3,741), 높이 통계·미세조정은 train만 씁니다. 검출 AP는 IoU 0.5, KITTI moderate 조건(박스 높이 ≥ 25 px, occluded ≤ 1, truncated ≤ 0.3), 40점 보간이며 DontCare 영역 검출과 Car 평가에서의 Truck은 무시합니다. 거리·위험 등급은 클래스 무관 IoU ≥ 0.5 매칭이고, 놓친 GT는 SAFE 예측, 오검출은 GT SAFE로 셉니다. 고전 검출기는 신뢰도가 없어 AP가 단일 PR 점이 되고, 재현율 2.5% 미만이면 R40 AP는 0입니다.
+
 ### 지표
 
 | 영역 | 지표 |
@@ -128,32 +172,66 @@ flowchart LR
 
 | 주차 | 내용 | 산출물 |
 |:---:|---|---|
-| 1 | v2 코드 이식, `Detector` 인터페이스 리팩터링 | `--detector classical` 동작 |
-| 2 | KITTI 로더, GT 위험 등급 생성, 평가 스크립트 | `eval/kitti_eval.py`, E0 · E1 결과 |
-| 3 | YOLO 연동, 클래스 매핑 | E2 결과 |
-| 4 | 클래스별 높이 통계, GT 박스 실험 | E3 · E5 결과, RQ2 분석 |
-| 5 | 단안 깊이 모델 연동, 스케일 보정 | E4 결과 |
-| 6 | Tracking 시퀀스로 TTC 평가 | TTC 오차 표 |
-| 7 | 오류 사례 분석, 결과 정리 | 실패 사례 갤러리, 최종 비교표 |
+| 1 | v2 코드 이식, `Detector` 인터페이스 리팩터링 | ✅ `--detector classical` 동작 |
+| 2 | KITTI 로더, GT 위험 등급 생성, 평가 스크립트 | ✅ `eval/kitti_eval.py`, E0 · E1 결과 |
+| 3 | YOLO 연동, 클래스 매핑 | ✅ E2 결과 (+ E2ft 미세조정) |
+| 4 | 클래스별 높이 통계, GT 박스 실험 | ✅ E3 · E3a · E3b · E5 결과, RQ2 분석 |
+| 5 | 단안 깊이 모델 연동, 스케일 보정 | ✅ E4 · E4m · E4h 결과 |
+| 6 | Tracking 시퀀스로 TTC 평가 | ✅ TTC 오차 표 |
+| 7 | 오류 사례 분석, 결과 정리 | ✅ 실패 사례 갤러리, 최종 비교표 |
 
 ---
 
-## 📁 디렉토리 구조 (계획)
+## 🚀 실행 방법
+
+```bash
+uv sync --extra dev                         # Python 3.10, torch cu128, OpenCV 4.x
+bash scripts/download_kitti.sh all          # ~/data/kitti (KITTI_ROOT로 변경 가능)
+cp <yolo11m.pt> weights/                    # 없으면 Ultralytics가 자동 다운로드
+
+uv run python scripts/compute_height_stats.py                     # E3/E3a 높이 통계 (train)
+uv run python scripts/calibrate_detector_heights.py \
+    --config configs/E2.yaml --key yolo11m                         # E3b 검출기 박스 보정 (train)
+uv run python scripts/run_experiment.py --config configs/E2.yaml  # 실험 하나 (val)
+uv run python scripts/run_experiment.py --config configs/E1.yaml --detector yolo   # 검출기만 교체
+uv run python scripts/finetune_yolo.py                            # E2ft 가중치
+uv run python scripts/eval_ttc.py --configs configs/E1.yaml configs/E3b.yaml configs/E4m.yaml
+uv run python scripts/benchmark_speed.py --configs configs/E*.yaml [--device cpu]
+uv run python scripts/make_report.py                              # results/summary.md + 그래프
+uv run python scripts/make_gallery.py --a E1 --b E4h --key risk_geo
+uv run python scripts/demo.py --config configs/E4h.yaml --kitti-seq 0001 --gt --out results/demo.mp4
+uv run pytest
+```
+
+## 📁 디렉토리 구조
 
 ```
 Hybrid-Forward-Collision-Warning/
-├── configs/              실험별 설정 (E0 ~ E5)
-├── scripts/
-│   ├── download_kitti.sh
-│   └── run_experiment.py
-├── src/
-│   ├── detectors/        classical.py · yolo.py (공통 Detector 인터페이스)
-│   ├── distance/         pinhole.py · mono_depth.py
-│   ├── pipeline/         v2에서 가져온 전처리 · 차선 · 추적 · 위험도
-│   └── eval/             kitti_eval.py · gt_risk.py
-├── results/              실험 결과 (metrics.json, 그래프)
+├── configs/              실험별 설정 (E0 ~ E5, E2ft, E3a/b, E4m/h) · height_stats.json
+├── scripts/              download_kitti.sh · run_experiment.py · eval_ttc.py · finetune_yolo.py
+│                         compute_height_stats.py · calibrate_detector_heights.py
+│                         benchmark_speed.py · make_report.py · make_gallery.py · demo.py
+├── src/hfcw/
+│   ├── detectors/        base.py(Detector 인터페이스) · classical.py(v1/v2) · yolo.py · gt.py
+│   ├── distance/         pinhole.py · mono_depth.py (상대/미터 깊이, 스케일 보정, 경계 융합)
+│   ├── pipeline/         v2 이식: preprocessing · lane · feature · tracking(TTC) · risk · fcw · visualize
+│   ├── eval/             kitti_eval.py(AP·거리·위험 등급) · gt_risk.py · ttc_eval.py
+│   └── data/kitti.py     Object/Tracking 로더, cam0→cam2 보정, train/val 분할
+├── tests/                단위 테스트 (pytest)
+├── results/              실험별 metrics.json · distance_pairs.csv, figures/, gallery/, ttc/, summary.md
 └── README.md
 ```
+
+### v2에서 바뀐 점
+
+| 항목 | v2 | v3 |
+|---|---|---|
+| 검출 | `detection.py` 함수 호출 | `Detector` 인터페이스, 설정 한 줄로 교체 |
+| 카메라 | 실습 카메라 fy = 613 고정 | 프레임마다 KITTI `P2`에서 fx, fy, cx, cy |
+| 박스 좌표 | 정수 x, y, w, h | 실수 x1, y1, x2, y2 (v2 프로퍼티 호환) |
+| TTC | `area / dArea` (프레임, 실제 TTC의 약 1/2) | 박스 높이 스케일 `k·Δt / (s − 1)`, 거리 차분 TTC 추가 |
+| 횡방향 거리 | 없음 | `X = (u − cx)·Z / fx` |
+| 위험 등급 | v2 점수 공식 | v2 공식 + 기하 규칙(GT와 같은 Z·X 임계값) 동시 출력 |
 
 ## ⚠️ 리스크와 대응
 
@@ -161,7 +239,9 @@ Hybrid-Forward-Collision-Warning/
 |---|---|
 | COCO와 KITTI의 클래스 정의 차이 (Van, Cyclist) | 매핑 표를 고정하고 평가에서 Van은 Car로 합산 |
 | 가려짐·잘림 객체 때문에 박스 높이가 실제보다 작음 | KITTI `occluded` · `truncated` 필드로 구간을 나눠 평가 |
-| 단안 깊이는 상대 깊이라 스케일이 없음 | 가까운 차량의 핀홀 거리로 프레임별 스케일을 맞춤 |
+| 단안 깊이는 상대 깊이라 스케일이 없음 | 가까운 차량의 핀홀 거리로 프레임별 스케일을 맞춤 → 원거리 외삽이 불안정해 미터 깊이 모델 + 경계 융합(E4h)으로 대체 |
+| 데이터 누수 | 높이 통계·미세조정은 train 분할만, 모든 수치는 val 분할 |
+| OpenCV 5.0에서 `HOGDescriptor` 제거 | `opencv-python<5`로 고정 (v2 HOG 보행자 검출 유지) |
 
 ## 📚 참고 자료
 

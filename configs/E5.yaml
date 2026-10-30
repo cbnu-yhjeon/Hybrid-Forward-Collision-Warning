@@ -1,0 +1,9 @@
+name: E5
+description: "RQ2 상한선 — GT 박스 + 핀홀(평균 높이). 박스 오차 0, 높이 가정 오차만 남음"
+detector: {type: gt}
+distance: {type: pinhole, height: mean}
+preprocess: {clahe: true}
+lanes: true
+features: true
+tracking: false
+risk: v2

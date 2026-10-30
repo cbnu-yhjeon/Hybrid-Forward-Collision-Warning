@@ -1,0 +1,9 @@
+name: E2ft
+description: "RQ1 추가 — KITTI train 분할로 미세조정한 YOLO, 나머지는 E2와 동일"
+detector: {type: yolo, weights: weights/yolo11m_kitti.pt, conf: 0.25, imgsz: 1280}
+distance: {type: pinhole, height: mean}
+preprocess: {clahe: true}
+lanes: true
+features: true
+tracking: {enabled: true, ttc: scale}
+risk: v2
