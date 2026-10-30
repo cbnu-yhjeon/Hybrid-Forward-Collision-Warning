@@ -1,0 +1,9 @@
+name: E4m
+description: "RQ3 추가 — YOLO + Depth Anything V2 Metric-Outdoor Small(미터 깊이), 핀홀로 프레임별 단일 스케일 보정"
+detector: {type: yolo, weights: weights/yolo11m.pt, conf: 0.25, imgsz: 1280}
+distance: {type: mono_depth, metric: true, scale: fit, height: class_mean, model: depth-anything/Depth-Anything-V2-Metric-Outdoor-Small-hf}
+preprocess: {clahe: true}
+lanes: true
+features: true
+tracking: {enabled: true, ttc: scale}
+risk: v2

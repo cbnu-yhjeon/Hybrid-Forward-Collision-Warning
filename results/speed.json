@@ -1,0 +1,126 @@
+{
+  "E0": {
+    "cuda": {
+      "preprocess_ms": 1.26,
+      "detect_ms": 0.65,
+      "distance_ms": 0.0,
+      "track_risk_ms": 0.07,
+      "total_ms": 1.98,
+      "fps": 505.05
+    }
+  },
+  "E1": {
+    "cuda": {
+      "preprocess_ms": 6.69,
+      "detect_ms": 5.68,
+      "distance_ms": 0.02,
+      "track_risk_ms": 5.05,
+      "total_ms": 17.45,
+      "fps": 57.31
+    },
+    "cpu": {
+      "preprocess_ms": 6.16,
+      "detect_ms": 4.6,
+      "distance_ms": 0.02,
+      "track_risk_ms": 4.13,
+      "total_ms": 14.9,
+      "fps": 67.11
+    }
+  },
+  "E2": {
+    "cuda": {
+      "preprocess_ms": 7.39,
+      "detect_ms": 11.58,
+      "distance_ms": 0.02,
+      "track_risk_ms": 6.41,
+      "total_ms": 25.41,
+      "fps": 39.35
+    },
+    "cpu": {
+      "preprocess_ms": 7.66,
+      "detect_ms": 174.99,
+      "distance_ms": 0.03,
+      "track_risk_ms": 6.47,
+      "total_ms": 189.14,
+      "fps": 5.29
+    }
+  },
+  "E2ft": {
+    "cuda": {
+      "preprocess_ms": 7.48,
+      "detect_ms": 11.46,
+      "distance_ms": 0.02,
+      "track_risk_ms": 6.95,
+      "total_ms": 25.91,
+      "fps": 38.6
+    }
+  },
+  "E3b": {
+    "cuda": {
+      "preprocess_ms": 7.46,
+      "detect_ms": 11.81,
+      "distance_ms": 0.02,
+      "track_risk_ms": 6.62,
+      "total_ms": 25.91,
+      "fps": 38.6
+    }
+  },
+  "E4": {
+    "cuda": {
+      "preprocess_ms": 7.5,
+      "detect_ms": 12.35,
+      "distance_ms": 30.57,
+      "track_risk_ms": 6.36,
+      "total_ms": 56.79,
+      "fps": 17.61
+    }
+  },
+  "E4m": {
+    "cuda": {
+      "preprocess_ms": 7.39,
+      "detect_ms": 11.97,
+      "distance_ms": 30.35,
+      "track_risk_ms": 6.69,
+      "total_ms": 56.4,
+      "fps": 17.73
+    }
+  },
+  "E4h": {
+    "cuda": {
+      "preprocess_ms": 7.18,
+      "detect_ms": 11.11,
+      "distance_ms": 15.09,
+      "track_risk_ms": 6.17,
+      "total_ms": 39.55,
+      "fps": 25.28
+    }
+  },
+  "E4hft": {
+    "cuda": {
+      "preprocess_ms": 7.2,
+      "detect_ms": 11.53,
+      "distance_ms": 15.16,
+      "track_risk_ms": 6.67,
+      "total_ms": 40.56,
+      "fps": 24.65
+    },
+    "cpu": {
+      "preprocess_ms": 7.71,
+      "detect_ms": 155.79,
+      "distance_ms": 516.99,
+      "track_risk_ms": 7.06,
+      "total_ms": 687.55,
+      "fps": 1.45
+    }
+  },
+  "E5": {
+    "cuda": {
+      "preprocess_ms": 7.13,
+      "detect_ms": 0.02,
+      "distance_ms": 0.02,
+      "track_risk_ms": 6.37,
+      "total_ms": 13.54,
+      "fps": 73.86
+    }
+  }
+}

@@ -1,0 +1,9 @@
+name: E3b
+description: "RQ2 추가 — 높이 통계를 YOLO 박스로 train 분할에서 보정 (median(h_det·z/fy))"
+detector: {type: yolo, weights: weights/yolo11m.pt, conf: 0.25, imgsz: 1280}
+distance: {type: pinhole, height: class_effective_det, det_key: yolo11m}
+preprocess: {clahe: true}
+lanes: true
+features: true
+tracking: {enabled: true, ttc: scale}
+risk: v2

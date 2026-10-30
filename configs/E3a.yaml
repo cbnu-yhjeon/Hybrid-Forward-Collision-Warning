@@ -1,0 +1,9 @@
+name: E3a
+description: "E3 ablation — 클래스별 3D 높이 평균 (2D 박스 투영 효과 미보정)"
+detector: {type: yolo, weights: weights/yolo11m.pt, conf: 0.25, imgsz: 1280}
+distance: {type: pinhole, height: class_mean}
+preprocess: {clahe: true}
+lanes: true
+features: true
+tracking: {enabled: true, ttc: scale}
+risk: v2

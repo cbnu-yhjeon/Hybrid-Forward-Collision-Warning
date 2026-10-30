@@ -1,0 +1,9 @@
+name: E1
+description: "v2 현재 버전 — Contour + Watershed + HOG 보행자, 핀홀(평균 높이), KITTI P2의 fy"
+detector: {type: classical}
+distance: {type: pinhole, height: mean}
+preprocess: {clahe: true}
+lanes: true
+features: true
+tracking: {enabled: true, ttc: scale}
+risk: v2

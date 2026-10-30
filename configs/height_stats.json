@@ -1,0 +1,62 @@
+{
+  "split": "train",
+  "n_frames": 3740,
+  "classes": {
+    "Car": {
+      "n": 15586,
+      "mean_height_m": 1.592,
+      "std_height_m": 0.2567,
+      "n_effective": 4805,
+      "effective_height_m": 1.7323
+    },
+    "Cyclist": {
+      "n": 796,
+      "mean_height_m": 1.736,
+      "std_height_m": 0.0954,
+      "n_effective": 431,
+      "effective_height_m": 1.8292
+    },
+    "Pedestrian": {
+      "n": 2433,
+      "mean_height_m": 1.7339,
+      "std_height_m": 0.1555,
+      "n_effective": 1304,
+      "effective_height_m": 1.8156
+    },
+    "Truck": {
+      "n": 530,
+      "mean_height_m": 3.2424,
+      "std_height_m": 0.4364,
+      "n_effective": 236,
+      "effective_height_m": 3.2283
+    }
+  },
+  "detector_effective": {
+    "yolo11m": {
+      "Car": 1.6441,
+      "Cyclist": 1.7657,
+      "Pedestrian": 1.706,
+      "Truck": 3.1073
+    },
+    "yolo11m_kitti": {
+      "Car": 1.7023,
+      "Cyclist": 1.8353,
+      "Pedestrian": 1.8073,
+      "Truck": 3.2275
+    }
+  },
+  "detector_effective_n": {
+    "yolo11m": {
+      "Car": 6151,
+      "Cyclist": 331,
+      "Pedestrian": 1178,
+      "Truck": 153
+    },
+    "yolo11m_kitti": {
+      "Car": 5907,
+      "Cyclist": 474,
+      "Pedestrian": 1168,
+      "Truck": 241
+    }
+  }
+}

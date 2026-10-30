@@ -1,0 +1,9 @@
+name: E3bft
+description: "미세조정 YOLO + 미세조정 YOLO 박스로 보정한 유효 높이"
+detector: {type: yolo, weights: weights/yolo11m_kitti.pt, conf: 0.25, imgsz: 1280}
+distance: {type: pinhole, height: class_effective_det, det_key: yolo11m_kitti}
+preprocess: {clahe: true}
+lanes: true
+features: true
+tracking: {enabled: true, ttc: scale}
+risk: v2

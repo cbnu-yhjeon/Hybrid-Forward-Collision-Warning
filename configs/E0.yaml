@@ -1,0 +1,9 @@
+name: E0
+description: "v1 기준선 — Contour 검출, 면적 기반 위험도, 거리 추정 없음"
+detector: {type: classical_v1}
+distance: {type: none}
+preprocess: {clahe: false}
+lanes: false
+features: false
+tracking: false
+risk: v1
